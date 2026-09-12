@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Chicken Jump</title>
+    <meta name="description" content="An arcade-style chicken jumping game with unpredictable road obstacles, multipliers, point rewards, and secure cloud sync." />
+    <meta property="og:title" content="Chicken Jump" />
+    <meta property="og:description" content="An arcade-style chicken jumping game with unpredictable road obstacles, multipliers, point rewards, and secure cloud sync." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0b0f19" />
+
+    <!-- Google AdMob / AdSense Configuration -->
+    <meta name="google-adsense-account" content="ca-pub-6326541829707953" />
+    <meta name="admob:app_id" content="ca-app-pub-6326541829707953~5162526406" />
+    <meta name="admob:rewarded_ad_unit" content="ca-app-pub-6326541829707953/4504050852" />
+
+    <!-- Google Publisher Tag (GPT) & AdSense for Rewarded Ads -->
+    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js" crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6326541829707953"
+         crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-container" id="appRoot">
+      <!-- Top Header & Brand -->
+      <header class="app-header" id="headerSection">
+        <div class="brand-section">
+          <div class="chicken-logo-icon" id="logoIcon" aria-hidden="true">🐔</div>
+          <div>
+            <h1 class="brand-title" id="gameTitle">
+              Chicken Jump
+              <span class="brand-badge" id="brandBadge">Arcade</span>
+            </h1>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button type="button" class="sound-toggle-btn" id="soundToggleBtn" aria-label="Toggle Sound" title="Toggle Sound">
+            <span id="soundIcon">🔊</span>
+          </button>
+          <button type="button" class="auth-btn" id="authTriggerBtn">
+            Sign In
+          </button>
+        </div>
+      </header>
+
+      <!-- Points Balance HUD Card -->
+      <section class="points-hud-card" id="pointsHud">
+        <div class="points-label-group">
+          <span class="hud-subtitle">Points Balance</span>
+          <span class="hud-user-info" id="userIdentifier">Guest Player</span>
+        </div>
+        <div class="points-display">
+          <span class="points-coin" aria-hidden="true">🪙</span>
+          <span class="points-value" id="currentPointsVal">200</span>
+          <span class="points-unit">PTS</span>
+        </div>
+      </section>
+
+      <!-- Main Game Stage Viewport -->
+      <section class="game-stage-wrapper" id="gameStage">
+        <!-- Floating Multiplier HUD -->
+        <div class="hud-multiplier-pill" id="multiplierPill">
+          <span class="mult-label">Multiplier</span>
+          <span class="mult-value" id="currentMultiplierVal">1.00x</span>
+        </div>
+
+        <div class="hud-potential-pill" id="potentialPill">
+          <span class="potential-label">Win</span>
+          <span class="potential-value" id="potentialPayoutVal">0 PTS</span>
+        </div>
+
+        <!-- HTML5 Canvas -->
+        <div class="canvas-container" id="canvasContainer">
+          <canvas id="gameCanvas" width="440" height="330"></canvas>
+          <div class="canvas-tap-hint" id="canvasTapHint">Tap Screen or Press Space to Jump</div>
+        </div>
+
+        <!-- Game Result Overlay -->
+        <div class="game-result-overlay" id="gameResultOverlay">
+          <div class="result-badge" id="resultBadge">Result</div>
+          <h2 class="result-title" id="resultTitle">Round Ended</h2>
+          <p class="result-subtitle" id="resultSubtitle">Details...</p>
+          <button type="button" class="result-close-btn" id="resultCloseBtn">Continue</button>
+        </div>
+      </section>
+
+      <!-- Game Controls Panel -->
+      <section class="game-controls-panel" id="controlsPanel">
+        <!-- Primary Action Buttons -->
+        <div class="primary-controls-row">
+          <button type="button" class="arcade-btn btn-start" id="btnStart">
+            <span aria-hidden="true">▶</span> START GAME – 20 POINTS
+          </button>
+          <button type="button" class="arcade-btn btn-jump" id="btnJump">
+            <span aria-hidden="true">🦘</span> JUMP FORWARD
+          </button>
+          <button type="button" class="arcade-btn btn-collect" id="btnCollect">
+            <span aria-hidden="true">💰</span> COLLECT
+          </button>
+        </div>
+
+        <!-- Insufficient Points Warning -->
+        <div class="not-enough-points-banner" id="notEnoughPointsBanner">
+          <span aria-hidden="true">⚠️</span>
+          <span>Not enough points. Watch an ad to earn more points.</span>
+        </div>
+
+        <!-- Separate Rewarded Ad Button -->
+        <button type="button" class="arcade-btn btn-reward-ad" id="btnRewardAd">
+          <span aria-hidden="true">🎬</span>
+          <span>WATCH AD → EARN 200 POINTS</span>
+          <span class="ad-badge-chip">+200 PTS</span>
+        </button>
+      </section>
+
+      <!-- Google AdSense Display Advertisement (Cleanly Separated on Home Screen) -->
+      <section class="adsense-display-wrapper" id="adsenseSection">
+        <span class="adsense-policy-label">Advertisement</span>
+        <div class="adsense-unit-container" id="adContainer">
+          <!-- Google AdSense Code Exactly as Provided -->
+          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5378392556030394"
+               crossorigin="anonymous"></script>
+          <!-- Chicken Jump -->
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-5378392556030394"
+               data-ad-slot="6088982303"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+               (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+      </section>
+
+      <!-- Recent Results Quick Bar -->
+      <section class="recent-results-bar" id="recentResultsSection">
+        <div class="results-header">
+          <span>Recent Rounds</span>
+          <span style="font-size: 11px; color: #64748b;">Live Results</span>
+        </div>
+        <div class="results-pills-row" id="recentChipsRow">
+          <!-- Dynamically populated chips -->
+        </div>
+      </section>
+
+      <!-- Game History & Audit Ledger Tabs -->
+      <section class="history-section-card" id="historySection">
+        <nav class="history-nav-tabs">
+          <button type="button" class="tab-btn active" id="tabHistoryBtn">Game History</button>
+          <button type="button" class="tab-btn" id="tabLedgerBtn">Points Ledger (Anti-Cheat)</button>
+        </nav>
+
+        <div class="tab-content" id="historyContent">
+          <div class="history-list" id="gameHistoryList">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="tab-content" id="ledgerContent" style="display: none;">
+          <div class="history-list" id="transactionsList">
+            <!-- Populated dynamically with unique transaction IDs -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Game Guide / Rules -->
+      <section class="info-accordion-card" id="rulesCard">
+        <h3 class="info-title">📖 Rules & Fair Play</h3>
+        <ul class="info-list">
+          <li><strong>200 Free Points:</strong> Every registered or new player gets 200 virtual starting points.</li>
+          <li><strong>20 Points per round:</strong> Starting a game costs 20 points, deducted immediately.</li>
+          <li><strong>Unpredictable Crash:</strong> Each jump across the road increases your multiplier. Cash out with <strong>COLLECT</strong> before the unpredictable hazard strikes!</li>
+          <li><strong>Watch Rewarded Ad (+200 PTS):</strong> Complete the 15-second rewarded ad video to earn 200 free virtual points.</li>
+          <li><strong>Anti-Cheat Security:</strong> All point balances and rounds are cryptographically verified with unique transaction IDs.</li>
+        </ul>
+      </section>
+    </main>
+
+    <!-- Rewarded Video Ad Modal (Google AdMob SDK & Ads Unit ca-app-pub-6326541829707953/4504050852) -->
+    <div class="modal-backdrop" id="rewardAdModal" role="dialog" aria-modal="true">
+      <div class="reward-ad-dialog">
+        <div class="ad-video-header">
+          <div class="ad-network-tag" id="adNetworkTag">
+            <span class="ad-badge-dot"></span>
+            <span class="ad-badge-text">Google AdMob Rewarded</span>
+          </div>
+          <div class="ad-timer-pill" id="adTimerText">Reward in 15s</div>
+          <button type="button" class="ad-skip-btn" id="adSkipBtn">✕ Close (Cancel Reward)</button>
+        </div>
+
+        <div class="ad-video-stage" id="adVideoStage">
+          <!-- Google Rewarded Ad Live Unit Container -->
+          <div class="admob-unit-box" id="admobUnitBox">
+            <ins class="adsbygoogle"
+                 style="display:block;width:100%;height:100%;"
+                 data-ad-client="ca-pub-6326541829707953"
+                 data-ad-slot="4504050852"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+          </div>
+          <!-- Real-time interactive fallback canvas -->
+          <canvas class="ad-sponsor-canvas" id="adSponsorCanvas" width="400" height="225"></canvas>
+        </div>
+
+        <div class="ad-progress-track">
+          <div class="ad-progress-bar" id="adProgressBar"></div>
+        </div>
+
+        <div class="ad-video-footer">
+          <div class="ad-sponsor-info">
+            <span class="ad-sponsor-icon">🎬</span>
+            <div>
+              <div class="ad-sponsor-name" id="adSponsorName">Google AdMob Rewarded Video</div>
+              <div class="ad-reward-notice" id="adUnitLabel">Unit: ca-app-pub-6326541829707953/4504050852</div>
+            </div>
+          </div>
+          <button type="button" class="ad-install-btn" id="adInstallBtn">Visit Sponsor</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase Auth Modal -->
+    <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="authModalTitle">Sign In</h3>
+          <button type="button" class="modal-close-btn" id="authCloseBtn" aria-label="Close">✕</button>
+        </div>
+
+        <form id="authForm">
+          <div class="auth-form-group">
+            <label class="auth-label" for="authEmail">Email Address</label>
+            <input class="auth-input" type="email" id="authEmail" required placeholder="player@example.com" />
+          </div>
+
+          <div class="auth-form-group" style="margin-top: 10px;">
+            <label class="auth-label" for="authPass">Password</label>
+            <input class="auth-input" type="password" id="authPass" required minlength="6" placeholder="••••••••" />
+          </div>
+
+          <button type="submit" class="auth-submit-btn" id="authSubmitBtn" style="margin-top: 16px; width: 100%;">
+            Sign In
+          </button>
+        </form>
+
+        <p class="auth-switch-text">
+          Don't have an account? <span class="auth-switch-link" id="authSwitchLink">Create one</span>
+        </p>
+
+        <button type="button" class="auth-submit-btn" id="authGuestBtn" style="background: #334155; color: #fff;">
+          Continue as Guest
+        </button>
+      </div>
+    </div>
+
+    <!-- Celebration Banner Toast -->
+    <div class="celebration-toast" id="celebrationToast">
+      <span>🎉</span>
+      <span id="toastMessage">Points updated!</span>
+    </div>
+
+    <!-- Modular Game Script -->
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>

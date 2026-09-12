@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUser(data) {
+      return data.userId is string &&
+        data.userId == request.auth.uid &&
+        data.points is number &&
+        data.points >= 0 &&
+        data.points <= 10000000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTransaction(data, userId) {
+      return data.transactionId is string &&
+        isValidId(data.transactionId) &&
+        data.userId == userId &&
+        data.type in ['welcome_bonus', 'game_start', 'game_collect', 'rewarded_ad'] &&
+        data.amount is number &&
+        data.balanceAfter is number &&
+        data.balanceAfter >= 0 &&
+        data.timestamp == request.time;
+    }
+
+    function isValidGameRound(data, userId) {
+      return data.roundId is string &&
+        isValidId(data.roundId) &&
+        data.userId == userId &&
+        data.cost == 20 &&
+        data.multiplier is number &&
+        data.multiplier >= 1.0 &&
+        data.payout is number &&
+        data.payout >= 0 &&
+        data.status in ['collected', 'crashed'] &&
+        data.timestamp == request.time;
+    }
+
+    // User Document
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUser(incoming()) &&
+        incoming().points == 200 && // New user receives exactly 200 points
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUser(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+
+      // Subcollection: Transactions ledger
+      match /transactions/{transactionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+          isValidId(transactionId) &&
+          isValidTransaction(incoming(), userId);
+        allow update, delete: if false; // Ledger records are strictly immutable
+      }
+
+      // Subcollection: Game history
+      match /game_history/{roundId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+          isValidId(roundId) &&
+          isValidGameRound(incoming(), userId);
+        allow update, delete: if false; // Historical rounds are immutable
+      }
+    }
+  }
+}

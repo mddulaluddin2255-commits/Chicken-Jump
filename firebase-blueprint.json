@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered player profile with virtual game points",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email or guest identifier"
+        },
+        "points": {
+          "type": "number",
+          "description": "Current virtual in-game points balance"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["userId", "points", "createdAt", "updatedAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Immutable ledger record for game starts, collections, and rewarded ads",
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Unique transaction ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["welcome_bonus", "game_start", "game_collect", "rewarded_ad"],
+          "description": "Transaction category"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Points delta (+200, -20, etc.)"
+        },
+        "balanceAfter": {
+          "type": "number",
+          "description": "Points balance after this transaction"
+        },
+        "metadata": {
+          "type": "string",
+          "description": "Optional JSON or description string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of transaction"
+        }
+      },
+      "required": ["transactionId", "userId", "type", "amount", "balanceAfter", "timestamp"]
+    },
+    "GameRound": {
+      "title": "GameRound",
+      "description": "Record of a played chicken jump round",
+      "type": "object",
+      "properties": {
+        "roundId": {
+          "type": "string",
+          "description": "Unique round identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Player UID"
+        },
+        "cost": {
+          "type": "number",
+          "description": "Cost in points (20 points)"
+        },
+        "multiplier": {
+          "type": "number",
+          "description": "Final multiplier achieved"
+        },
+        "payout": {
+          "type": "number",
+          "description": "Points collected (0 if crashed)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["collected", "crashed"],
+          "description": "Round outcome"
+        },
+        "jumpsCount": {
+          "type": "number",
+          "description": "Number of successful jumps completed"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Round conclusion timestamp"
+        }
+      },
+      "required": ["roundId", "userId", "cost", "multiplier", "payout", "status", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with virtual points balance"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "User's points transactions ledger"
+    },
+    "/users/{userId}/game_history/{roundId}": {
+      "schema": "GameRound",
+      "description": "User's past chicken jump game rounds"
+    }
+  }
+}

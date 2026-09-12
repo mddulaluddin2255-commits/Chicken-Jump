@@ -1,0 +1,6 @@
+{
+  "name": "Chicken Jump",
+  "description": "An arcade-style chicken jumping game with unpredictable road obstacles, multipliers, point rewards, and secure cloud sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
