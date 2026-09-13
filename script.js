@@ -793,14 +793,127 @@ class ChickenJumpGame {
   }
 }
 
-// --- Rewarded Video Ad System ---
+// --- VAST 3.0 Video Ad Configuration ---
+export const VAST_3_CONFIG = {
+  tagUrl: 'https://crookedagreement.com/dJmeF.ztd/GwNwvdZWG/U_/Ce/mz9/uwZbUhlFkKPLTdcG0BMoj/M/1cNdTFMntAN/zHQUyJMozUUN1QNzwx',
+  defaultDuration: 15
+};
+
+function sendVastBeacon(url) {
+  if (!url) return;
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(url);
+    } else {
+      const img = new Image();
+      img.src = url;
+    }
+  } catch {
+    try {
+      fetch(url, { mode: 'no-cors', keepalive: true });
+    } catch (_) {}
+  }
+}
+
+function parseVastXml(xmlString) {
+  try {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+
+    if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+      return null;
+    }
+
+    // Extract MediaFiles
+    const mediaNodes = xmlDoc.getElementsByTagName('MediaFile');
+    let mediaFileUrl = '';
+    for (let i = 0; i < mediaNodes.length; i++) {
+      const src = mediaNodes[i].textContent ? mediaNodes[i].textContent.trim() : '';
+      if (src) {
+        mediaFileUrl = src;
+        const type = mediaNodes[i].getAttribute('type') || '';
+        if (type.includes('mp4') || type.includes('webm')) {
+          break;
+        }
+      }
+    }
+
+    // Extract ClickThrough
+    const clickNodes = xmlDoc.getElementsByTagName('ClickThrough');
+    let clickThroughUrl = '';
+    if (clickNodes.length > 0 && clickNodes[0].textContent) {
+      clickThroughUrl = clickNodes[0].textContent.trim();
+    }
+
+    // Extract ClickTracking
+    const clickTrackingNodes = xmlDoc.getElementsByTagName('ClickTracking');
+    const clickTrackingUrls = [];
+    for (let i = 0; i < clickTrackingNodes.length; i++) {
+      const url = clickTrackingNodes[i].textContent ? clickTrackingNodes[i].textContent.trim() : '';
+      if (url) clickTrackingUrls.push(url);
+    }
+
+    // Extract Impressions
+    const impressionNodes = xmlDoc.getElementsByTagName('Impression');
+    const impressionUrls = [];
+    for (let i = 0; i < impressionNodes.length; i++) {
+      const url = impressionNodes[i].textContent ? impressionNodes[i].textContent.trim() : '';
+      if (url) impressionUrls.push(url);
+    }
+
+    // Extract TrackingEvents
+    const trackingNodes = xmlDoc.getElementsByTagName('Tracking');
+    const trackingEvents = {};
+    for (let i = 0; i < trackingNodes.length; i++) {
+      const event = trackingNodes[i].getAttribute('event');
+      const url = trackingNodes[i].textContent ? trackingNodes[i].textContent.trim() : '';
+      if (event && url) {
+        if (!trackingEvents[event]) trackingEvents[event] = [];
+        trackingEvents[event].push(url);
+      }
+    }
+
+    // Extract Duration
+    const durationNodes = xmlDoc.getElementsByTagName('Duration');
+    let durationSeconds = 15;
+    if (durationNodes.length > 0 && durationNodes[0].textContent) {
+      const parts = durationNodes[0].textContent.trim().split(':');
+      if (parts.length === 3) {
+        const h = parseInt(parts[0], 10) || 0;
+        const m = parseInt(parts[1], 10) || 0;
+        const s = parseFloat(parts[2]) || 0;
+        const total = h * 3600 + m * 60 + s;
+        if (total > 0 && total <= 60) durationSeconds = Math.round(total);
+      }
+    }
+
+    return {
+      mediaFileUrl,
+      clickThroughUrl,
+      clickTrackingUrls,
+      impressionUrls,
+      trackingEvents,
+      durationSeconds
+    };
+  } catch (e) {
+    console.warn('VAST XML parse error:', e);
+    return null;
+  }
+}
+
+// --- Rewarded Video Ad System (VAST 3.0 Engine) ---
 class RewardedAdManager {
   constructor() {
     this.isOpen = false;
     this.timer = 15;
+    this.totalDuration = 15;
     this.timerInterval = null;
     this.completionToken = null;
     this.onRewardGranted = null;
+    this.vastData = null;
+    this.videoEl = null;
+    this.trackedEvents = new Set();
+    this.vastTagUrl = VAST_3_CONFIG.tagUrl;
 
     this.modalEl = document.getElementById('rewardAdModal');
     this.timerTextEl = document.getElementById('adTimerText');
@@ -821,24 +934,151 @@ class RewardedAdManager {
     if (this.installBtn) {
       this.installBtn.addEventListener('click', () => {
         audio.playClick();
-        window.open('https://google.com', '_blank', 'noopener,noreferrer');
+        this.handleClickThrough();
       });
     }
   }
 
-  showRewardedAd(onRewardCallback) {
+  handleClickThrough() {
+    const targetUrl = (this.vastData && this.vastData.clickThroughUrl) ? this.vastData.clickThroughUrl : this.vastTagUrl;
+    if (this.vastData && this.vastData.clickTrackingUrls) {
+      this.vastData.clickTrackingUrls.forEach(sendVastBeacon);
+    }
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  async showRewardedAd(onRewardCallback) {
     if (this.isOpen) return;
     this.isOpen = true;
     this.onRewardGranted = onRewardCallback;
+    this.totalDuration = 15;
     this.timer = 15;
-    this.completionToken = generateUniqueId('reward_ad');
+    this.trackedEvents.clear();
+    this.completionToken = generateUniqueId('vast_reward');
 
     this.modalEl.classList.add('open');
     this.updateUI();
 
-    // Render interactive canvas preview with current ad unit details
+    // Render interactive canvas preview with VAST 3.0 details
     this.startSponsorAnimation();
 
+    // Initialize VAST 3.0 Player
+    await this.initVastPlayer();
+
+    // Run countdown loop
+    this.startTimer();
+  }
+
+  async initVastPlayer() {
+    if (!this.adUnitBox) return;
+    this.adUnitBox.innerHTML = '';
+
+    try {
+      // Request VAST 3.0 XML
+      const res = await fetch(this.vastTagUrl, { method: 'GET', mode: 'cors' });
+      if (res.ok) {
+        const text = await res.text();
+        this.vastData = parseVastXml(text);
+      }
+    } catch (e) {
+      console.info('VAST direct fetch handled (CORS/network fallback applied):', e);
+    }
+
+    if (this.vastData && this.vastData.mediaFileUrl) {
+      // Fire impression beacons
+      if (this.vastData.impressionUrls) {
+        this.vastData.impressionUrls.forEach(sendVastBeacon);
+      }
+
+      if (this.vastData.durationSeconds) {
+        this.totalDuration = this.vastData.durationSeconds;
+        this.timer = this.totalDuration;
+        this.updateUI();
+      }
+
+      this.videoEl = document.createElement('video');
+      this.videoEl.className = 'vast-video-player';
+      this.videoEl.src = this.vastData.mediaFileUrl;
+      this.videoEl.autoplay = true;
+      this.videoEl.playsInline = true;
+      this.videoEl.setAttribute('webkit-playsinline', 'true');
+      this.videoEl.muted = true;
+
+      // Audio toggle button
+      const muteBtn = document.createElement('button');
+      muteBtn.type = 'button';
+      muteBtn.className = 'vast-mute-toggle-btn';
+      muteBtn.innerHTML = '🔇';
+      muteBtn.title = 'Unmute Video';
+      muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.videoEl) {
+          this.videoEl.muted = !this.videoEl.muted;
+          muteBtn.innerHTML = this.videoEl.muted ? '🔇' : '🔊';
+        }
+      });
+
+      // Overlay sponsor badge
+      const overlayBadge = document.createElement('div');
+      overlayBadge.className = 'vast-ad-click-overlay';
+      overlayBadge.textContent = 'VAST 3.0 Video • Click to Visit';
+
+      this.videoEl.addEventListener('click', () => {
+        this.handleClickThrough();
+      });
+
+      this.videoEl.addEventListener('play', () => {
+        this.fireTracking('start');
+      });
+
+      this.videoEl.addEventListener('timeupdate', () => {
+        if (!this.videoEl || !this.videoEl.duration) return;
+        const current = this.videoEl.currentTime;
+        const dur = this.videoEl.duration;
+        const ratio = current / dur;
+        this.timer = Math.max(0, Math.ceil(dur - current));
+        this.updateUI();
+
+        if (ratio >= 0.25) this.fireTracking('firstQuartile');
+        if (ratio >= 0.5) this.fireTracking('midpoint');
+        if (ratio >= 0.75) this.fireTracking('thirdQuartile');
+      });
+
+      this.videoEl.addEventListener('ended', () => {
+        this.fireTracking('complete');
+        this.completeAdReward();
+      });
+
+      this.videoEl.addEventListener('error', (err) => {
+        console.warn('Video element playback error, falling back to canvas:', err);
+        if (this.adUnitBox) this.adUnitBox.innerHTML = '';
+      });
+
+      this.adUnitBox.appendChild(this.videoEl);
+      this.adUnitBox.appendChild(muteBtn);
+      this.adUnitBox.appendChild(overlayBadge);
+
+      try {
+        const playPromise = this.videoEl.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn('Video auto-play prevented, waiting user interaction:', err);
+          });
+        }
+      } catch (_) {}
+    }
+  }
+
+  fireTracking(eventName) {
+    if (this.trackedEvents.has(eventName)) return;
+    this.trackedEvents.add(eventName);
+    if (this.vastData && this.vastData.trackingEvents && this.vastData.trackingEvents[eventName]) {
+      this.vastData.trackingEvents[eventName].forEach(sendVastBeacon);
+    }
+  }
+
+  startTimer() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
     this.timerInterval = setInterval(() => {
       this.timer--;
       this.updateUI();
@@ -854,7 +1094,8 @@ class RewardedAdManager {
       this.timerTextEl.textContent = `Reward in ${this.timer}s`;
     }
     if (this.progressBarEl) {
-      const progress = ((15 - this.timer) / 15) * 100;
+      const denom = Math.max(1, this.totalDuration);
+      const progress = ((denom - this.timer) / denom) * 100;
       this.progressBarEl.style.width = `${progress}%`;
     }
   }
@@ -865,14 +1106,29 @@ class RewardedAdManager {
       return;
     }
 
-    const confirmQuit = confirm('Wait! If you close this ad before 15 seconds, you will NOT receive the +200 free points. Close anyway?');
+    const confirmQuit = confirm('Wait! If you close this VAST video ad before completion, you will NOT receive the +200 free points. Close anyway?');
     if (confirmQuit) {
       this.abandonAd();
     }
   }
 
+  cleanupVideo() {
+    if (this.videoEl) {
+      try {
+        this.videoEl.pause();
+        this.videoEl.src = '';
+        this.videoEl.load();
+      } catch (_) {}
+      this.videoEl = null;
+    }
+    if (this.adUnitBox) {
+      this.adUnitBox.innerHTML = '';
+    }
+  }
+
   abandonAd() {
     clearInterval(this.timerInterval);
+    this.cleanupVideo();
     this.isOpen = false;
     this.onRewardGranted = null;
     this.completionToken = null;
@@ -888,10 +1144,11 @@ class RewardedAdManager {
       this.timerTextEl.textContent = 'Reward Ready! 🎉';
     }
 
-    const token = this.completionToken || generateUniqueId('admob_reward');
+    const token = this.completionToken || generateUniqueId('vast_reward');
     const callback = this.onRewardGranted;
 
     setTimeout(() => {
+      this.cleanupVideo();
       this.isOpen = false;
       this.modalEl.classList.remove('open');
       if (typeof callback === 'function') {
@@ -904,6 +1161,7 @@ class RewardedAdManager {
 
   closeAd() {
     clearInterval(this.timerInterval);
+    this.cleanupVideo();
     this.isOpen = false;
     this.modalEl.classList.remove('open');
   }
@@ -920,7 +1178,7 @@ class RewardedAdManager {
 
       // Deep modern gradient background
       const grad = this.ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(0, '#090d16');
       grad.addColorStop(1, '#1e1b4b');
       this.ctx.fillStyle = grad;
       this.ctx.fillRect(0, 0, w, h);
@@ -939,7 +1197,7 @@ class RewardedAdManager {
       this.ctx.fillStyle = '#38bdf8';
       this.ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
       this.ctx.textAlign = 'center';
-      this.ctx.fillText('SPONSORED REWARDED AD', w / 2, h / 2 - 38);
+      this.ctx.fillText('VAST 3.0 REWARDED VIDEO', w / 2, h / 2 - 38);
 
       // Main Callout
       this.ctx.fillStyle = '#ffffff';
@@ -957,7 +1215,7 @@ class RewardedAdManager {
 
       this.ctx.fillStyle = '#cbd5e1';
       this.ctx.font = '11px monospace';
-      this.ctx.fillText('Sponsored Reward Video Player', w / 2, h / 2 + 28);
+      this.ctx.fillText('crookedagreement.com (VAST 3.0)', w / 2, h / 2 + 28);
 
       // Bottom prompt
       this.ctx.fillStyle = '#a5b4fc';
