@@ -793,12 +793,10 @@ class ChickenJumpGame {
   }
 }
 
-// --- Rewarded Video Ad System (Google AdMob SDK & Ad Unit Integration) ---
+// --- Rewarded Video Ad System (Google AdSense Web Integration) ---
 export const GOOGLE_REWARDED_CONFIG = {
-  appId: 'ca-app-pub-6326541829707953~5162526406',
-  adUnitId: 'ca-app-pub-6326541829707953/4504050852',
-  publisherId: 'ca-pub-6326541829707953',
-  adSlot: '4504050852'
+  publisherId: 'ca-pub-5378392556030394',
+  client: 'ca-pub-5378392556030394'
 };
 
 class RewardedAdManager {
@@ -822,47 +820,12 @@ class RewardedAdManager {
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
 
     this.setupEvents();
-    this.initGoogleAdMobSDK();
+    this.initGoogleAdSense();
   }
 
-  initGoogleAdMobSDK() {
+  initGoogleAdSense() {
     try {
-      // 1. Google Publisher Tag (GPT) Out-Of-Page Rewarded Slot
-      window.googletag = window.googletag || { cmd: [] };
-      window.googletag.cmd.push(() => {
-        try {
-          if (window.googletag.defineOutOfPageSlot && window.googletag.enums?.OutOfPageFormat?.REWARDED) {
-            const slot = window.googletag.defineOutOfPageSlot(
-              `/6326541829707953/${GOOGLE_REWARDED_CONFIG.adSlot}`,
-              window.googletag.enums.OutOfPageFormat.REWARDED
-            );
-            if (slot) {
-              this.gptRewardedSlot = slot;
-              slot.addService(window.googletag.pubads());
-
-              window.googletag.pubads().addEventListener('rewardedSlotReady', (event) => {
-                this.gptRewardedReady = true;
-                this.gptReadyEvent = event;
-              });
-
-              window.googletag.pubads().addEventListener('rewardedSlotGranted', () => {
-                this.completeAdReward();
-              });
-
-              window.googletag.pubads().addEventListener('rewardedSlotClosed', () => {
-                this.closeAd();
-              });
-
-              window.googletag.enableServices();
-              window.googletag.display(slot);
-            }
-          }
-        } catch (e) {
-          console.warn('Google GPT Rewarded Ad setup:', e);
-        }
-      });
-
-      // 2. Initialize AdSense ins element if present
+      // Initialize AdSense ins element
       if (window.adsbygoogle && this.adUnitBox) {
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -871,7 +834,7 @@ class RewardedAdManager {
         }
       }
     } catch (err) {
-      console.warn('AdMob SDK init note:', err);
+      console.warn('AdSense init note:', err);
     }
   }
 
@@ -1014,11 +977,11 @@ class RewardedAdManager {
         this.ctx.fill();
       }
 
-      // AdMob Badge Icon & Header
+      // AdSense Badge Icon & Header
       this.ctx.fillStyle = '#38bdf8';
       this.ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
       this.ctx.textAlign = 'center';
-      this.ctx.fillText('GOOGLE ADMOB REWARDED NETWORK', w / 2, h / 2 - 38);
+      this.ctx.fillText('GOOGLE ADSENSE REWARDED AD', w / 2, h / 2 - 38);
 
       // Main Callout
       this.ctx.fillStyle = '#ffffff';
@@ -1036,7 +999,7 @@ class RewardedAdManager {
 
       this.ctx.fillStyle = '#cbd5e1';
       this.ctx.font = '11px monospace';
-      this.ctx.fillText('ca-app-pub-6326541829707953/4504050852', w / 2, h / 2 + 28);
+      this.ctx.fillText('ca-pub-5378392556030394', w / 2, h / 2 + 28);
 
       // Bottom prompt
       this.ctx.fillStyle = '#a5b4fc';
