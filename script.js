@@ -794,10 +794,6 @@ class ChickenJumpGame {
 }
 
 // --- Rewarded Video Ad System ---
-export const REWARDED_AD_CONFIG = {
-  unitId: '84d91382035637140b72'
-};
-
 class RewardedAdManager {
   constructor() {
     this.isOpen = false;
@@ -961,7 +957,7 @@ class RewardedAdManager {
 
       this.ctx.fillStyle = '#cbd5e1';
       this.ctx.font = '11px monospace';
-      this.ctx.fillText(REWARDED_AD_CONFIG.unitId, w / 2, h / 2 + 28);
+      this.ctx.fillText('Sponsored Reward Video Player', w / 2, h / 2 + 28);
 
       // Bottom prompt
       this.ctx.fillStyle = '#a5b4fc';
