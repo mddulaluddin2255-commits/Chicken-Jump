@@ -793,10 +793,9 @@ class ChickenJumpGame {
   }
 }
 
-// --- Rewarded Video Ad System (Google AdSense Web Integration) ---
-export const GOOGLE_REWARDED_CONFIG = {
-  publisherId: 'ca-pub-5378392556030394',
-  client: 'ca-pub-5378392556030394'
+// --- Rewarded Video Ad System ---
+export const REWARDED_AD_CONFIG = {
+  unitId: '84d91382035637140b72'
 };
 
 class RewardedAdManager {
@@ -806,9 +805,6 @@ class RewardedAdManager {
     this.timerInterval = null;
     this.completionToken = null;
     this.onRewardGranted = null;
-    this.gptRewardedSlot = null;
-    this.gptRewardedReady = false;
-    this.gptReadyEvent = null;
 
     this.modalEl = document.getElementById('rewardAdModal');
     this.timerTextEl = document.getElementById('adTimerText');
@@ -820,22 +816,6 @@ class RewardedAdManager {
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
 
     this.setupEvents();
-    this.initGoogleAdSense();
-  }
-
-  initGoogleAdSense() {
-    try {
-      // Initialize AdSense ins element
-      if (window.adsbygoogle && this.adUnitBox) {
-        try {
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (e) {
-          // Ignore duplicate push errors
-        }
-      }
-    } catch (err) {
-      console.warn('AdSense init note:', err);
-    }
   }
 
   setupEvents() {
@@ -845,7 +825,7 @@ class RewardedAdManager {
     if (this.installBtn) {
       this.installBtn.addEventListener('click', () => {
         audio.playClick();
-        window.open('https://play.google.com/store/apps', '_blank', 'noopener,noreferrer');
+        window.open('https://google.com', '_blank', 'noopener,noreferrer');
       });
     }
   }
@@ -855,30 +835,12 @@ class RewardedAdManager {
     this.isOpen = true;
     this.onRewardGranted = onRewardCallback;
     this.timer = 15;
-    this.completionToken = generateUniqueId('admob_reward');
-
-    // If Google Web Rewarded Ad is loaded and ready, display it
-    if (this.gptRewardedReady && this.gptReadyEvent && typeof this.gptReadyEvent.makeRewardedVisible === 'function') {
-      try {
-        this.gptReadyEvent.makeRewardedVisible();
-      } catch (e) {
-        console.warn('makeRewardedVisible error:', e);
-      }
-    }
-
-    // Attempt pushing to AdSense ins container
-    if (this.adUnitBox) {
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (e) {
-        // Ignored
-      }
-    }
+    this.completionToken = generateUniqueId('reward_ad');
 
     this.modalEl.classList.add('open');
     this.updateUI();
 
-    // Render interactive canvas preview with official AdMob details
+    // Render interactive canvas preview with current ad unit details
     this.startSponsorAnimation();
 
     this.timerInterval = setInterval(() => {
@@ -977,11 +939,11 @@ class RewardedAdManager {
         this.ctx.fill();
       }
 
-      // AdSense Badge Icon & Header
+      // Sponsor Badge Icon & Header
       this.ctx.fillStyle = '#38bdf8';
       this.ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
       this.ctx.textAlign = 'center';
-      this.ctx.fillText('GOOGLE ADSENSE REWARDED AD', w / 2, h / 2 - 38);
+      this.ctx.fillText('SPONSORED REWARDED AD', w / 2, h / 2 - 38);
 
       // Main Callout
       this.ctx.fillStyle = '#ffffff';
@@ -999,7 +961,7 @@ class RewardedAdManager {
 
       this.ctx.fillStyle = '#cbd5e1';
       this.ctx.font = '11px monospace';
-      this.ctx.fillText('ca-pub-5378392556030394', w / 2, h / 2 + 28);
+      this.ctx.fillText(REWARDED_AD_CONFIG.unitId, w / 2, h / 2 + 28);
 
       // Bottom prompt
       this.ctx.fillStyle = '#a5b4fc';

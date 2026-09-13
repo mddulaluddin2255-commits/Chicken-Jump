@@ -11,12 +11,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#0b0f19" />
 
-    <!-- Google AdSense Configuration -->
-    <meta name="google-adsense-account" content="ca-pub-5378392556030394" />
-
-    <!-- Google AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5378392556030394"
-         crossorigin="anonymous"></script>
+    <!-- Ad Configuration -->
+    <meta name="ad-network-id" content="84d91382035637140b72" />
 
     <link rel="stylesheet" href="./style.css" />
   </head>
@@ -178,28 +174,22 @@
       </section>
     </main>
 
-    <!-- Rewarded Video Ad Modal (Google AdSense ca-pub-5378392556030394) -->
+    <!-- Rewarded Video Ad Modal (Ad Unit: 84d91382035637140b72) -->
     <div class="modal-backdrop" id="rewardAdModal" role="dialog" aria-modal="true">
       <div class="reward-ad-dialog">
         <div class="ad-video-header">
           <div class="ad-network-tag" id="adNetworkTag">
             <span class="ad-badge-dot"></span>
-            <span class="ad-badge-text">Google AdSense Rewarded</span>
+            <span class="ad-badge-text">Sponsored Ad</span>
           </div>
           <div class="ad-timer-pill" id="adTimerText">Reward in 15s</div>
           <button type="button" class="ad-skip-btn" id="adSkipBtn">✕ Close (Cancel Reward)</button>
         </div>
 
         <div class="ad-video-stage" id="adVideoStage">
-          <!-- Google AdSense Live Unit Container -->
-          <div class="admob-unit-box" id="admobUnitBox">
-            <ins class="adsbygoogle"
-                 style="display:block;width:100%;height:100%;"
-                 data-ad-client="ca-pub-5378392556030394"
-                 data-ad-format="auto"
-                 data-full-width-responsive="true"></ins>
-          </div>
-          <!-- Real-time interactive fallback canvas -->
+          <!-- Sponsored Ad Live Unit Container -->
+          <div class="admob-unit-box" id="admobUnitBox" data-unit-id="84d91382035637140b72"></div>
+          <!-- Real-time interactive canvas -->
           <canvas class="ad-sponsor-canvas" id="adSponsorCanvas" width="400" height="225"></canvas>
         </div>
 
@@ -211,8 +201,8 @@
           <div class="ad-sponsor-info">
             <span class="ad-sponsor-icon">🎬</span>
             <div>
-              <div class="ad-sponsor-name" id="adSponsorName">Google AdSense Sponsored Video</div>
-              <div class="ad-reward-notice" id="adUnitLabel">Client: ca-pub-5378392556030394</div>
+              <div class="ad-sponsor-name" id="adSponsorName">Rewarded Video Sponsor</div>
+              <div class="ad-reward-notice" id="adUnitLabel">Unit ID: 84d91382035637140b72</div>
             </div>
           </div>
           <button type="button" class="ad-install-btn" id="adInstallBtn">Visit Sponsor</button>
